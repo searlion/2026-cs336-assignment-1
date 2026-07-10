@@ -53,7 +53,6 @@ if __name__ == "__main__":
 
     ## Get the lexicographically largest byte pair with the highest frequency
     max_frequency_pair, max_frequency = max(straight_index.items(), key=lambda item: (item[1], item[0][0], item[0][1])) # Get the lexicographically largest pair with the highest frequency
-    print(max_frequency_pair, max_frequency)
 
     # Merge tokens
     for word_id_this in byte_pair_index[max_frequency_pair]:
