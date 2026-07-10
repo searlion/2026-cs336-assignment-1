@@ -37,6 +37,8 @@ python-preference = "managed"
 log_cli = true
 log_cli_level = "WARNING"
 addopts = "-s"
+pythonpath = ["."]
+
 
 [tool.ruff]
 line-length = 120
