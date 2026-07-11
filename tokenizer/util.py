@@ -103,7 +103,6 @@ def find_chunk_boundaries(
 # if __name__ == "__main__":
 def train_bpe(input_path: str, vocab_size: int = 500, special_tokens: list[str] = []) -> tuple[dict[int, bytes], list[tuple[bytes, bytes]]]:
     num_processes = cpu_count()
-    escape_special_tokens = "|".join([re.escape(token) for token in special_tokens])
 
     ## initialization of data structures for counting byte pairs and word pairs
     word_id_set : dict[encoded_word_hashable, encoded_word] = {} # Each unique pre-token gets an integer id.
