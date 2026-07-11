@@ -4,7 +4,6 @@ from collections import Counter
 PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
 
 
-type word_id = int 
 type frequency = int
 type byte_pair = tuple[bytes, bytes]
 type encoded_word = list[bytes] # A list bytes, where each bytes is a pre-tokenized word
@@ -32,18 +31,20 @@ def calculate_lexicographically_largest_byte_pair_with_highest_frequency(straigh
 
 # if __name__ == "__main__":
 def train_bpe(input_path: str, vocab_size: int = 500, special_tokens: list[str] = []) -> tuple[dict[int, bytes], list[tuple[bytes, bytes]]]:
-    with open(input_path, "r", encoding="utf-8") as f:
-        chunk = f.read()
+
     ## initialization of data structures for counting byte pairs and word pairs
     byte_pair_index : dict[byte_pair, set[encoded_word_hashable]] = {} # an inverted index telling you where each pair lives, so after a merge you only touch affected words
     straight_index : dict[byte_pair, frequency] = {} # The thing you argmax over to pick the next merge.
     word_id_set : dict[encoded_word_hashable, encoded_word] = {} # Each unique pre-token gets an integer id.
     word_id_count : dict[encoded_word_hashable, frequency] = {} # How many times that word occured (its frequency weight)
-    vocab : dict[int, bytes] = {i: bytes([i]) for i in range(256)} # The vocab is a mapping from the integer id to the bytes representation of the pre-tokenized word
-    for i in range(256, 256 + len(special_tokens)):
-        vocab[i] = special_tokens[i - 256].encode("utf-8") # Add the special tokens to the vocab
-    merges : list[tuple[bytes, bytes]] = [] # The merges is a list of tuples of the merged tokens, in the order they were merged
     
+
+    with open(input_path, "r", encoding="utf-8") as f:
+        chunk = f.read()
+    
+
+    ## BELOW CODE ARE PARALLELISABLE
+
     ## Below code assigns a word_id to each pre-tokenized word, and counts its frequency
     for match in tokenizing_chunk(chunk):
         encoded_hashable = encode_as_hashable_bytes(match.group())
@@ -62,7 +63,14 @@ def train_bpe(input_path: str, vocab_size: int = 500, special_tokens: list[str] 
         for tuple_pair, frequency_count in counters.items():
             straight_index[tuple_pair] = straight_index.get(tuple_pair, 0) + frequency_count * word_id_this_frequency
             byte_pair_index.setdefault(tuple_pair, set()).add(word_id_this)
-        
+
+    ### BELOW CODE ARE NON-PARALLELISABLE  
+
+    vocab : dict[int, bytes] = {i: bytes([i]) for i in range(256)} # The vocab is a mapping from the integer id to the bytes representation of the pre-tokenized word
+    for i in range(256, 256 + len(special_tokens)):
+        vocab[i] = special_tokens[i - 256].encode("utf-8") # Add the special tokens to the vocab
+    merges : list[tuple[bytes, bytes]] = [] # The merges is a list of tuples of the merged tokens, in the order they were merged
+
     while len(vocab) < vocab_size and straight_index:
         ## Get the lexicographically largest byte pair with the highest frequency
         max_frequency_pair, max_frequency = calculate_lexicographically_largest_byte_pair_with_highest_frequency(straight_index)
