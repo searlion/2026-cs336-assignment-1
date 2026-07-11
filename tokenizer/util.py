@@ -35,11 +35,10 @@ def train_bpe(input_path: str, vocab_size: int = 500, special_tokens: list[str] 
     with open(input_path, "r", encoding="utf-8") as f:
         chunk = f.read()
     ## initialization of data structures for counting byte pairs and word pairs
-    byte_pair_index : dict[byte_pair, set[word_id]] = {} # an inverted index telling you where each pair lives, so after a merge you only touch affected words
+    byte_pair_index : dict[byte_pair, set[encoded_word_hashable]] = {} # an inverted index telling you where each pair lives, so after a merge you only touch affected words
     straight_index : dict[byte_pair, frequency] = {} # The thing you argmax over to pick the next merge.
-    word_id_set : dict[word_id, encoded_word] = {} # Each unique pre-token gets an integer id.
-    word_id_set_reverse : dict[encoded_word_hashable, word_id] = {} # Reverse lookup for the above
-    word_id_count : dict[word_id, frequency] = {} # How many times that word occured (its frequency weight)
+    word_id_set : dict[encoded_word_hashable, encoded_word] = {} # Each unique pre-token gets an integer id.
+    word_id_count : dict[encoded_word_hashable, frequency] = {} # How many times that word occured (its frequency weight)
     vocab : dict[int, bytes] = {i: bytes([i]) for i in range(256)} # The vocab is a mapping from the integer id to the bytes representation of the pre-tokenized word
     for i in range(256, 256 + len(special_tokens)):
         vocab[i] = special_tokens[i - 256].encode("utf-8") # Add the special tokens to the vocab
@@ -49,14 +48,11 @@ def train_bpe(input_path: str, vocab_size: int = 500, special_tokens: list[str] 
     for match in tokenizing_chunk(chunk):
         encoded_hashable = encode_as_hashable_bytes(match.group())
         encoded = encode_as_bytes(encoded_hashable)
-        if encoded_hashable not in word_id_set_reverse.keys():
-            word_id_this = len(word_id_set)
-            word_id_set[word_id_this] = encoded
-            word_id_set_reverse[encoded_hashable] = word_id_this
-            word_id_count[word_id_this] = 1
+        if encoded_hashable not in word_id_set.keys():
+            word_id_set[encoded_hashable] = encoded
+            word_id_count[encoded_hashable] = 1
         else:
-            word_id_this = word_id_set_reverse[encoded_hashable]
-            word_id_count[word_id_this] += 1
+            word_id_count[encoded_hashable] += 1
     
     ## Below code builds the byte pair index, straight index, and reverse index for the pre-tokenized words
     for word_id_this in word_id_set.keys():
