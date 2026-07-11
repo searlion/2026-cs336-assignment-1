@@ -122,24 +122,6 @@ def train_bpe(input_path: str, vocab_size: int = 500, special_tokens: list[str] 
                 else:
                     word_id_count[word_id_this] += frequency_this
 
-    # with Pool(num_processes) as p:
-    #     for chunk in p.imap_unordered(read_chunk, [(input_path, start, end) for start, end in zip(boundaries[:-1], boundaries[1:])]):
-    #         segments = re.split(escape_special_tokens, chunk)
-    #         if len(special_tokens) == 0:
-    #             segments = [chunk]
-            
-    #         for segment in segments:
-    #             ## Below code assigns a word_id to each pre-tokenized word, and counts its frequency
-    #             for match in tokenizing_chunk(segment):
-    #                 encoded_hashable = encode_as_hashable_bytes(match.group())
-    #                 encoded = encode_as_bytes(encoded_hashable)
-    #                 if encoded_hashable not in word_id_set.keys():
-    #                     word_id_set[encoded_hashable] = encoded
-    #                     word_id_count[encoded_hashable] = 1
-    #                 else:
-    #                     word_id_count[encoded_hashable] += 1
-        
-
     ### BELOW CODE ARE NON-PARALLELISABLE  
     byte_pair_index : dict[byte_pair, set[encoded_word_hashable]] = {} # an inverted index telling you where each pair lives, so after a merge you only touch affected words
     straight_index : dict[byte_pair, frequency] = {} # The thing you argmax over to pick the next merge.
