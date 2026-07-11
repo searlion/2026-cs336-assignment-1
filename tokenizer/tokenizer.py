@@ -146,7 +146,10 @@ class Tokenizer:
 
     def encode_iterable(self, iterable: Iterable[str]) -> Iterator[int]:
         # Implement the encoding logic for an iterable of strings here
-        pass
+        yield from (token_id for text in iterable for token_id in self.encode(text))
+        # Above is equivalent to:
+        # for text in iterable:
+        #     for token_id in self.encode(text):
 
     def decode(self, ids: list[int]) -> str:
         # Implement the decoding logic here
