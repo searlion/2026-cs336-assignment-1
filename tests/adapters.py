@@ -16,6 +16,7 @@ from tokenizer.rmsnorm import RMSNorm
 from tokenizer.swiglu import SwiGLU
 from tokenizer.rope import Rope
 from tokenizer.softmax import softmax
+from tokenizer.scaled_dot_product_attention import scaled_dot_product_attention
 
 def run_linear(
     d_in: int,
@@ -113,7 +114,7 @@ def run_scaled_dot_product_attention(
     Returns:
         Float[Tensor, " ... queries d_v"]: Output of SDPA
     """
-    raise NotImplementedError
+    return scaled_dot_product_attention(Q,K,V,mask)
 
 
 def run_multihead_self_attention(
