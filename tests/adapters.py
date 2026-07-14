@@ -17,7 +17,9 @@ from tokenizer.swiglu import SwiGLU
 from tokenizer.rope import Rope
 from tokenizer.softmax import softmax
 from tokenizer.scaled_dot_product_attention import scaled_dot_product_attention
-from tokenizer.multihead_self_attention import Multihead_self_attention
+from tokenizer.multihead_self_attention import Multihead_self_attention, Multihead_self_attention_with_rope
+from tokenizer.transformer_block import Transformer_block
+from tokenizer.cross_entropy import cross_entropy
 
 def run_linear(
     d_in: int,
@@ -190,7 +192,8 @@ def run_multihead_self_attention_with_rope(
         Float[Tensor, " ... sequence_length d_model"]: Tensor with the output of running your optimized, batched multi-headed attention
         implementation with the given QKV projection weights and input features.
     """
-    raise NotImplementedError
+    multihead_self_attention_with_rope = Multihead_self_attention_with_rope(d_model, num_heads, q_proj_weight, k_proj_weight, v_proj_weight, o_proj_weight, theta, max_seq_len)
+    return multihead_self_attention_with_rope.forward(in_features)
 
 
 def run_rope(
@@ -286,7 +289,15 @@ def run_transformer_block(
         Float[Tensor, "batch sequence_length d_model"] Tensor with the output of
         running the Transformer block on the input features while using RoPE.
     """
-    raise NotImplementedError
+    transformer_block = Transformer_block(
+        d_model=d_model,
+        num_heads=num_heads,
+        d_ff=d_ff,
+        max_seq_len=max_seq_len,
+        theta=theta,
+        weights=weights
+    )
+    return transformer_block.forward(in_features=in_features)
 
 
 def run_transformer_lm(
@@ -464,7 +475,7 @@ def run_cross_entropy(
     Returns:
         Float[Tensor, ""]: The average cross-entropy loss across examples.
     """
-    raise NotImplementedError
+    return cross_entropy(inputs=inputs, targets=targets)
 
 
 def run_gradient_clipping(parameters: Iterable[torch.nn.Parameter], max_l2_norm: float) -> None:
