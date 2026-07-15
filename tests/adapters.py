@@ -20,6 +20,7 @@ from tokenizer.scaled_dot_product_attention import scaled_dot_product_attention
 from tokenizer.multihead_self_attention import Multihead_self_attention, Multihead_self_attention_with_rope
 from tokenizer.transformer_block import Transformer_block
 from tokenizer.cross_entropy import cross_entropy
+from tokenizer.adamW import AdamW
 
 def run_linear(
     d_in: int,
@@ -494,7 +495,7 @@ def get_adamw_cls() -> Any:
     """
     Returns a torch.optim.Optimizer that implements AdamW.
     """
-    raise NotImplementedError
+    return AdamW
 
 
 def run_get_lr_cosine_schedule(
