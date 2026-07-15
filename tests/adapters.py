@@ -4,6 +4,7 @@ import os
 import math
 from collections.abc import Iterable
 from typing import IO, Any, BinaryIO
+import einops
 
 import numpy.typing as npt
 import torch
@@ -489,8 +490,17 @@ def run_gradient_clipping(parameters: Iterable[torch.nn.Parameter], max_l2_norm:
 
     The gradients of the parameters (parameter.grad) should be modified in-place.
     """
-    raise NotImplementedError
-
+    params = list(parameters)
+    grads = [p.grad for p in params if p.grad is not None]
+    if not grads:
+        return
+    # Note: torch.cat([t1, t2, t3, ...]) takes a list of tensors and joins them end-to-end into one tensor. Operates on a list
+    # torch.flatten(t) takes a single tensor t and collapses its dimensions to 1-D. Operates on one tensor.
+    grads_flattened = torch.cat([g.flatten() for g in grads])
+    total_norm = torch.linalg.vector_norm(grads_flattened)
+    if total_norm > max_l2_norm:
+        scale = max_l2_norm / (total_norm + 1e-8)
+        torch._foreach_mul_(grads, scale.item())
 
 def get_adamw_cls() -> Any:
     """
@@ -546,7 +556,14 @@ def run_save_checkpoint(
             we've completed.
         out (str | os.PathLike | BinaryIO | IO[bytes]): Path or file-like object to serialize the model, optimizer, and iteration to.
     """
-    raise NotImplementedError
+    torch.save(
+        {
+        "model": model.state_dict(),
+        "optimizer": optimizer.state_dict(), 
+        "iteration": iteration
+        }, 
+        out
+    )
 
 
 def run_load_checkpoint(
@@ -567,7 +584,10 @@ def run_load_checkpoint(
     Returns:
         int: the previously-serialized number of iterations.
     """
-    raise NotImplementedError
+    load = torch.load(src)
+    model.load_state_dict(load["model"])
+    optimizer.load_state_dict(load["optimizer"])
+    return load["iteration"]
 
 
 def get_tokenizer(
